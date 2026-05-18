@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "name": "Stanford University",
+    "city": "Stanford",
+    "state": "CA",
+    "zip": "94305",
+    "lat": 37.4275,
+    "lng": -122.1697,
+    "gap_pct": 12,
+    "affordability_gap": 4000,
+    "pct_pell": 18,
+    "pell_quartile": "Q1 Low",
+    "locale_type": "Suburban",
+    "bea_region": "Far West (AK, CA, HI, NV, OR, WA)",
+    "carnegie_class": "Mixed Undergraduate/Graduate-Doctorate Large"
+  }
+]

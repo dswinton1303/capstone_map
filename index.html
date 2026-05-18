@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>College Affordability Gap — U.S. Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root {
+    --bg:       #f7f5f0;
+    --surface:  #ffffff;
+    --surface2: #f2f0eb;
+    --border:   #d8d4cb;
+    --border2:  #e8e4dd;
+    --text:     #1a1814;
+    --text-2:   #4a463e;
+    --text-3:   #7a7570;
+    --text-4:   #a09a92;
+
+    /* Affordability colors — muted, academic */
+    --green:        #2a7a4b;
+    --green-light:  #d6ede1;
+    --yellow:       #b87d12;
+    --yellow-light: #faecd4;
+    --red:          #b83232;
+    --red-light:    #f5d8d8;
+    --gray:         #8a857d;
+
+    /* BEA region accent palette */
+    --r1: #4e6fa8; /* Far West — slate blue */
+    --r2: #6b9e6b; /* Great Lakes — green */
+    --r3: #a0617a; /* Mid East — mauve */
+    --r4: #4e8fa0; /* New England — teal */
+    --r5: #9a7a3a; /* Territories — gold */
+    --r6: #7a6ea8; /* Plains — violet */
+    --r7: #a07850; /* Rocky Mts — terra */
+    --r8: #c05050; /* Southeast — brick */
+    --r9: #c07840; /* Southwest — amber */
+    --r10:#5a8a5a; /* Service Schools — sage */
+
+    --sidebar-w: 300px;
+    --topbar-h: 52px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOP BAR ── */
+  #topbar {
+    height: var(--topbar-h);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    gap: 18px;
+    flex-shrink: 0;
+    z-index: 1000;
+  }
+
+  #topbar h1 {
+    font-family: 'Source Serif 4', serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0;
+    white-space: nowrap;
+    color: var(--text);
+  }
+
+  #topbar h1 em {
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  .v-rule { width: 1px; height: 22px; background: var(--border); flex-shrink: 0; }
+
+  #legend-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .leg-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    color: var(--text-2);
+    font-family: 'IBM Plex Mono', monospace;
+    white-space: nowrap;
+  }
+
+  .leg-swatch {
+    width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  .leg-count {
+    font-weight: 500;
+    color: var(--text);
+    font-size: 11px;
+  }
+
+  #search-wrap {
+    margin-left: auto;
+    position: relative;
+  }
+
+  #search {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 10px 5px 28px;
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    width: 210px;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  #search:focus { border-color: var(--text-3); background: var(--surface); }
+  #search::placeholder { color: var(--text-4); }
+
+  .search-svg {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--text-4);
+  }
+
+  /* ── LAYOUT ── */
+  #main { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .sb-section {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border2);
+  }
+
+  .sb-label {
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 8px;
+  }
+
+  /* Color mode */
+  .mode-tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--surface2);
+    border-radius: 4px;
+    padding: 2px;
+  }
+
+  .mode-tab {
+    flex: 1;
+    padding: 5px 6px;
+    border-radius: 3px;
+    border: none;
+    background: transparent;
+    color: var(--text-3);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.12s;
+    text-align: center;
+  }
+
+  .mode-tab.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  /* BEA region filter */
+  .bea-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+
+  .bea-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 7px;
+    border-radius: 3px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 10.5px;
+    cursor: pointer;
+    transition: all 0.12s;
+    color: var(--text-2);
+    text-align: left;
+  }
+
+  .bea-chip:hover { border-color: var(--border); background: var(--surface2); }
+
+  .bea-chip.active {
+    border-color: transparent;
+    color: white;
+  }
+
+  .bea-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Locale & pell chips */
+  .chip-row { display: flex; flex-wrap: wrap; gap: 4px; }
+
+  .chip {
+    padding: 3px 9px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-2);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+
+  .chip:hover { border-color: var(--text-3); }
+
+  .chip.active {
+    background: var(--text);
+    border-color: var(--text);
+    color: white;
+  }
+
+  /* Carnegie select */
+  .sb-select {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 24px 6px 8px;
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 11px;
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23a09a92' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+  }
+
+  .sb-select:focus { border-color: var(--text-3); }
+
+  /* Gap slider */
+  .slider-row { display: flex; gap: 6px; align-items: center; }
+  .slider-val { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-3); white-space: nowrap; min-width: 42px; }
+  input[type=range] { flex: 1; accent-color: var(--text); cursor: pointer; height: 2px; }
+
+  /* Reset */
+  #reset-btn {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-3);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+
+  #reset-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* Results count + list */
+  #results-hdr {
+    padding: 8px 14px;
+    font-size: 10.5px;
+    color: var(--text-3);
+    border-bottom: 1px solid var(--border2);
+    font-family: 'IBM Plex Mono', monospace;
+    flex-shrink: 0;
+  }
+
+  #results-hdr span { color: var(--text); font-weight: 500; }
+
+  #college-list { overflow-y: auto; flex: 1; }
+  #college-list::-webkit-scrollbar { width: 3px; }
+  #college-list::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .c-item {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border2);
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    transition: background 0.08s;
+  }
+
+  .c-item:hover { background: var(--surface2); }
+  .c-item.sel { background: #f0ede6; border-left: 2px solid var(--text); }
+
+  .c-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+
+  .c-info { flex: 1; min-width: 0; }
+
+  .c-name {
+    font-size: 11.5px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text);
+  }
+
+  .c-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    color: var(--text-3);
+    margin-top: 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .c-gap {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  /* ── MAP ── */
+  #map { flex: 1; background: #eae8e3; }
+
+  /* Leaflet customization */
+  .leaflet-tile-pane { filter: saturate(0.15) brightness(1.05); }
+
+  .leaflet-popup-content-wrapper {
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12) !important;
+    color: var(--text) !important;
+    padding: 0 !important;
+  }
+
+  .leaflet-popup-tip { background: var(--surface) !important; }
+  .leaflet-popup-content { margin: 0 !important; min-width: 0 !important; }
+
+  .p-body { padding: 14px 16px; width: 270px; }
+
+  .p-name {
+    font-family: 'Source Serif 4', serif;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .p-loc {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-3);
+    margin-bottom: 12px;
+  }
+
+  .p-score {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border2);
+    margin-bottom: 10px;
+  }
+
+  .p-score-num {
+    font-family: 'Source Serif 4', serif;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .p-score-sub {
+    font-size: 10px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    line-height: 1.3;
+  }
+
+  .p-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .p-field-label {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-3);
+    margin-bottom: 2px;
+  }
+
+  .p-field-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--text);
+  }
+
+  .p-wide { grid-column: 1 / -1; border-top: 1px solid var(--border2); padding-top: 8px; margin-top: 2px; }
+
+  .p-bea-tag {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    color: white;
+    margin-top: 3px;
+  }
+
+  .leaflet-control-zoom {
+    border: 1px solid var(--border) !important;
+    border-radius: 4px !important;
+    overflow: hidden;
+  }
+
+  .leaflet-control-zoom a {
+    background: var(--surface) !important;
+    color: var(--text-2) !important;
+    border-color: var(--border) !important;
+    font-size: 16px !important;
+    line-height: 24px !important;
+  }
+
+  .leaflet-control-zoom a:hover { background: var(--surface2) !important; }
+
+  .leaflet-control-attribution {
+    font-size: 9px !important;
+    background: rgba(247,245,240,0.8) !important;
+    color: var(--text-4) !important;
+  }
+
+  /* Loading */
+  #loading {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 9999;
+    transition: opacity 0.3s;
+  }
+
+  #loading h2 {
+    font-family: 'Source Serif 4', serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text);
+  }
+
+  #loading p {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-3);
+  }
+
+  .loader {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border);
+    border-top-color: var(--text-2);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #sb-filters { overflow-y: auto; }
+  #sb-filters::-webkit-scrollbar { width: 3px; }
+  #sb-filters::-webkit-scrollbar-thumb { background: var(--border); }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="loader"></div>
+  <h2>College Affordability Gap</h2>
+  <p>Loading 2,796 institutions…</p>
+</div>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <h1>College <em>Affordability Gap</em> — United States</h1>
+  <div class="v-rule"></div>
+  <div id="legend-bar">
+    <div class="leg-item">
+      <div class="leg-swatch" style="background:var(--green)"></div>
+      <span>Affordable</span>
+      <span class="leg-count" id="cnt-g">—</span>
+    </div>
+    <div class="leg-item">
+      <div class="leg-swatch" style="background:var(--yellow)"></div>
+      <span>Marginal</span>
+      <span class="leg-count" id="cnt-y">—</span>
+    </div>
+    <div class="leg-item">
+      <div class="leg-swatch" style="background:var(--red)"></div>
+      <span>Unaffordable</span>
+      <span class="leg-count" id="cnt-r">—</span>
+    </div>
+  </div>
+  <div class="v-rule"></div>
+  <div id="search-wrap">
+    <svg class="search-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="search" type="text" placeholder="Search institution…">
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="sidebar">
+    <div id="sb-filters">
+
+      <!-- Color Mode -->
+      <div class="sb-section">
+        <div class="sb-label">Color by</div>
+        <div class="mode-tabs">
+          <button class="mode-tab active" data-mode="gap_pct">Gap %</button>
+          <button class="mode-tab" data-mode="affordability_gap">Gap $</button>
+          <button class="mode-tab" data-mode="pct_pell">Pell %</button>
+          <button class="mode-tab" data-mode="bea">BEA Region</button>
+        </div>
+
+        <div id="legend-detail" style="margin-top:8px;">
+          <div style="display:flex;flex-direction:column;gap:4px;" id="gap-legend">
+            <div class="leg-item"><div class="leg-swatch" style="background:var(--green)"></div><span style="font-size:10.5px;">≤ −10% — more affordable than reported</span></div>
+            <div class="leg-item"><div class="leg-swatch" style="background:var(--yellow)"></div><span style="font-size:10.5px;">−10% to +10% — marginal</span></div>
+            <div class="leg-item"><div class="leg-swatch" style="background:var(--red)"></div><span style="font-size:10.5px;">> +10% — less affordable than reported</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BEA Region Filter -->
+      <div class="sb-section">
+        <div class="sb-label">BEA Region</div>
+        <div class="bea-grid" id="bea-chips">
+          <button class="bea-chip active" data-val="all" style="grid-column:1/-1">
+            <div class="bea-dot" style="background:var(--text-3)"></div>All Regions
+          </button>
+          <button class="bea-chip" data-val="Far West (AK, CA, HI, NV, OR, WA)">
+            <div class="bea-dot" style="background:var(--r1)"></div>Far West
+          </button>
+          <button class="bea-chip" data-val="Great Lakes (IL, IN, MI, OH, WI)">
+            <div class="bea-dot" style="background:var(--r2)"></div>Great Lakes
+          </button>
+          <button class="bea-chip" data-val="Mid East (DE, DC, MD, NJ, NY, PA)">
+            <div class="bea-dot" style="background:var(--r3)"></div>Mid East
+          </button>
+          <button class="bea-chip" data-val="New England (CT, ME, MA, NH, RI, VT)">
+            <div class="bea-dot" style="background:var(--r4)"></div>New England
+          </button>
+          <button class="bea-chip" data-val="Plains (IA, KS, MN, MO, NE, ND, SD)">
+            <div class="bea-dot" style="background:var(--r6)"></div>Plains
+          </button>
+          <button class="bea-chip" data-val="Rocky Mountains (CO, ID, MT, UT, WY)">
+            <div class="bea-dot" style="background:var(--r7)"></div>Rocky Mts
+          </button>
+          <button class="bea-chip" data-val="Southeast (AL, AR, FL, GA, KY, LA, MS, NC, SC, TN, VA, WV)">
+            <div class="bea-dot" style="background:var(--r8)"></div>Southeast
+          </button>
+          <button class="bea-chip" data-val="Southwest (AZ, NM, OK, TX)">
+            <div class="bea-dot" style="background:var(--r9)"></div>Southwest
+          </button>
+          <button class="bea-chip" data-val="Other U.S. jurisdictions (AS, FM, GU, MH, MP, PR, PW, VI)">
+            <div class="bea-dot" style="background:var(--r5)"></div>Territories
+          </button>
+          <button class="bea-chip" data-val="U.S. Service schools">
+            <div class="bea-dot" style="background:var(--r10)"></div>Service Schools
+          </button>
+        </div>
+      </div>
+
+      <!-- Locale -->
+      <div class="sb-section">
+        <div class="sb-label">Locale</div>
+        <div class="chip-row" id="locale-chips">
+          <button class="chip active" data-val="all">All</button>
+          <button class="chip" data-val="Urban">Urban</button>
+          <button class="chip" data-val="Suburban">Suburban</button>
+          <button class="chip" data-val="Town">Town</button>
+          <button class="chip" data-val="Rural">Rural</button>
+        </div>
+      </div>
+
+      <!-- Pell -->
+      <div class="sb-section">
+        <div class="sb-label">Pell Grant Quartile</div>
+        <div class="chip-row" id="pell-chips">
+          <button class="chip active" data-val="all">All</button>
+          <button class="chip" data-val="Q1 Low">Q1 Low</button>
+          <button class="chip" data-val="Q2">Q2</button>
+          <button class="chip" data-val="Q3">Q3</button>
+          <button class="chip" data-val="Q4 High">Q4 High</button>
+        </div>
+      </div>
+
+      <!-- Carnegie -->
+      <div class="sb-section">
+        <div class="sb-label">Carnegie Classification</div>
+        <select id="carnegie-sel" class="sb-select">
+          <option value="all">All Classifications</option>
+          <optgroup label="Mixed">
+            <option>Mixed Associate Large</option>
+            <option>Mixed Associate Medium</option>
+            <option>Mixed Associate Small</option>
+            <option>Mixed Associate/Baccalaureate</option>
+            <option>Mixed Baccalaureate</option>
+            <option>Mixed Undergraduate/Graduate-Doctorate Large</option>
+            <option>Mixed Undergraduate/Graduate-Doctorate Medium</option>
+            <option>Mixed Undergraduate/Graduate-Doctorate Small</option>
+            <option>Mixed Undergraduate/Graduate-Master's Large/Medium</option>
+            <option>Mixed Undergraduate/Graduate-Master's Small</option>
+          </optgroup>
+          <optgroup label="Professions-focused">
+            <option>Professions-focused Associate Large/Medium</option>
+            <option>Professions-focused Associate Small</option>
+            <option>Professions-focused Associate/Baccalaureate</option>
+            <option>Professions-focused Baccalaureate Medium</option>
+            <option>Professions-focused Baccalaureate Small</option>
+            <option>Professions-focused Undergraduate/Graduate-Doctorate Large</option>
+            <option>Professions-focused Undergraduate/Graduate-Doctorate Medium</option>
+            <option>Professions-focused Undergraduate/Graduate-Doctorate Small</option>
+            <option>Professions-focused Undergraduate/Graduate-Master's Large/Medium</option>
+            <option>Professions-focused Undergraduate/Graduate-Master's Small</option>
+          </optgroup>
+          <optgroup label="Special Focus">
+            <option>Special Focus: Applied and Career Studies</option>
+            <option>Special Focus: Arts and Sciences</option>
+            <option>Special Focus: Arts, Music, and Design</option>
+            <option>Special Focus: Business</option>
+            <option>Special Focus: Graduate Studies</option>
+            <option>Special Focus: Law</option>
+            <option>Special Focus: Medical Schools and Centers</option>
+            <option>Special Focus: Nursing</option>
+            <option>Special Focus: Other Health Professions</option>
+            <option>Special Focus: Technology, Engineering, and Sciences</option>
+            <option>Special Focus: Theological Studies</option>
+          </optgroup>
+          <optgroup label="Other"><option>Not classified</option></optgroup>
+        </select>
+      </div>
+
+      <!-- Gap % Range -->
+      <div class="sb-section">
+        <div class="sb-label">Affordability Gap % Range</div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <div class="slider-row">
+            <span class="slider-val" id="gmin-lbl">−70%</span>
+            <input type="range" id="gap-min" min="-70" max="540" value="-70" step="5">
+          </div>
+          <div class="slider-row">
+            <span class="slider-val" id="gmax-lbl">+540%</span>
+            <input type="range" id="gap-max" min="-70" max="540" value="540" step="5">
+          </div>
+        </div>
+      </div>
+
+      <!-- Reset -->
+      <div class="sb-section">
+        <button id="reset-btn">Reset all filters</button>
+      </div>
+    </div>
+
+    <div id="results-hdr"><span id="vis-cnt">—</span> institutions shown</div>
+    <div id="college-list"></div>
+  </div>
+
+  <div id="map"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA (injected)
+// ═══════════════════════════════════════════════
+let COLLEGES = [ ];
+
+// ═══════════════════════════════════════════════
+// BEA COLORS
+// ═══════════════════════════════════════════════
+const BEA_COLORS = {
+  "Far West (AK, CA, HI, NV, OR, WA)": "#4e6fa8",
+  "Great Lakes (IL, IN, MI, OH, WI)": "#6b9e6b",
+  "Mid East (DE, DC, MD, NJ, NY, PA)": "#a0617a",
+  "New England (CT, ME, MA, NH, RI, VT)": "#4e8fa0",
+  "Other U.S. jurisdictions (AS, FM, GU, MH, MP, PR, PW, VI)": "#9a7a3a",
+  "Plains (IA, KS, MN, MO, NE, ND, SD)": "#7a6ea8",
+  "Rocky Mountains (CO, ID, MT, UT, WY)": "#a07850",
+  "Southeast (AL, AR, FL, GA, KY, LA, MS, NC, SC, TN, VA, WV)": "#c05050",
+  "Southwest (AZ, NM, OK, TX)": "#c07840",
+  "U.S. Service schools": "#5a8a5a",
+};
+
+const BEA_SHORT = {
+  "Far West (AK, CA, HI, NV, OR, WA)": "Far West",
+  "Great Lakes (IL, IN, MI, OH, WI)": "Great Lakes",
+  "Mid East (DE, DC, MD, NJ, NY, PA)": "Mid East",
+  "New England (CT, ME, MA, NH, RI, VT)": "New England",
+  "Other U.S. jurisdictions (AS, FM, GU, MH, MP, PR, PW, VI)": "Territories",
+  "Plains (IA, KS, MN, MO, NE, ND, SD)": "Plains",
+  "Rocky Mountains (CO, ID, MT, UT, WY)": "Rocky Mts",
+  "Southeast (AL, AR, FL, GA, KY, LA, MS, NC, SC, TN, VA, WV)": "Southeast",
+  "Southwest (AZ, NM, OK, TX)": "Southwest",
+  "U.S. Service schools": "Service Schools",
+};
+
+// ═══════════════════════════════════════════════
+// COLOR LOGIC
+// ═══════════════════════════════════════════════
+const MODES = {
+  gap_pct: {
+    color: c => {
+      const v = c.gap_pct;
+      if (v == null) return '#c8c4bc';
+      if (v <= -10) return '#2a7a4b';
+      if (v <= 10)  return '#b87d12';
+      return '#b83232';
+    },
+    label: c => {
+      const v = c.gap_pct;
+      if (v == null) return 'n/a';
+      return (v > 0 ? '+' : '') + v + '%';
+    },
+  },
+  affordability_gap: {
+    color: c => {
+      const v = c.affordability_gap;
+      if (v == null) return '#c8c4bc';
+      if (v <= -2000) return '#2a7a4b';
+      if (v <= 2000)  return '#b87d12';
+      return '#b83232';
+    },
+    label: c => {
+      const v = c.affordability_gap;
+      if (v == null) return 'n/a';
+      const abs = Math.abs(v).toLocaleString();
+      return (v < 0 ? '−' : '+') + '$' + abs;
+    },
+  },
+  pct_pell: {
+    color: c => {
+      const v = c.pct_pell;
+      if (v == null) return '#c8c4bc';
+      if (v >= 50) return '#2a7a4b';
+      if (v >= 25) return '#b87d12';
+      return '#b83232';
+    },
+    label: c => c.pct_pell != null ? c.pct_pell + '%' : 'n/a',
+  },
+  bea: {
+    color: c => BEA_COLORS[c.bea_region] || '#a09a92',
+    label: c => BEA_SHORT[c.bea_region] || c.bea_region || 'n/a',
+  },
+};
+
+function getColor(c) { return MODES[state.colorMode].color(c); }
+function getLabel(c) { return MODES[state.colorMode].label(c); }
+
+function colorClass(color) {
+  if (color === '#2a7a4b') return 'g';
+  if (color === '#b87d12') return 'y';
+  if (color === '#b83232') return 'r';
+  return 'x';
+}
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let state = {
+  colorMode: 'gap_pct',
+  bea: 'all',
+  locale: 'all',
+  pell: 'all',
+  carnegie: 'all',
+  gapMin: -70,
+  gapMax: 540,
+  search: '',
+  selected: null,
+};
+
+let markers = {};
+let map, layer;
+
+// ═══════════════════════════════════════════════
+// FILTER
+// ═══════════════════════════════════════════════
+function passes(c) {
+  if (state.search && !c.name.toLowerCase().includes(state.search)) return false;
+  if (state.bea !== 'all' && c.bea_region !== state.bea) return false;
+  if (state.locale !== 'all' && c.locale_type !== state.locale) return false;
+  if (state.pell !== 'all' && c.pell_quartile !== state.pell) return false;
+  if (state.carnegie !== 'all' && c.carnegie_class !== state.carnegie) return false;
+  if (c.gap_pct != null && (c.gap_pct < state.gapMin || c.gap_pct > state.gapMax)) return false;
+  return true;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════
+function render() {
+  let g=0, y=0, r=0;
+  const visible = [];
+
+  COLLEGES.forEach(c => {
+    const m = markers[c.id];
+    if (!m) return;
+    const show = passes(c);
+    const col = getColor(c);
+    const cl = colorClass(col);
+
+    m.setStyle({ fillColor: col, color: col });
+
+    if (show) {
+      m.addTo(layer);
+      if (cl === 'g') g++;
+      else if (cl === 'y') y++;
+      else if (cl === 'r') r++;
+      visible.push({ c, col });
+    } else {
+      layer.removeLayer(m);
+    }
+  });
+
+  document.getElementById('cnt-g').textContent = g;
+  document.getElementById('cnt-y').textContent = y;
+  document.getElementById('cnt-r').textContent = r;
+  document.getElementById('vis-cnt').textContent = visible.length;
+
+  updateLegendDetail();
+  renderList(visible);
+}
+
+function updateLegendDetail() {
+  const el = document.getElementById('legend-detail');
+  const m = state.colorMode;
+  if (m === 'bea') {
+    el.innerHTML = Object.entries(BEA_COLORS).map(([k,c]) =>
+      `<div class="leg-item"><div class="leg-swatch" style="background:${c}"></div><span style="font-size:10.5px;">${BEA_SHORT[k]}</span></div>`
+    ).join('');
+  } else if (m === 'gap_pct') {
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:3px;">
+      <div class="leg-item"><div class="leg-swatch" style="background:#2a7a4b"></div><span style="font-size:10.5px;">≤ −10% — more affordable</span></div>
+      <div class="leg-item"><div class="leg-swatch" style="background:#b87d12"></div><span style="font-size:10.5px;">−10% to +10% — marginal</span></div>
+      <div class="leg-item"><div class="leg-swatch" style="background:#b83232"></div><span style="font-size:10.5px;">> +10% — less affordable</span></div>
+    </div>`;
+  } else if (m === 'affordability_gap') {
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:3px;">
+      <div class="leg-item"><div class="leg-swatch" style="background:#2a7a4b"></div><span style="font-size:10.5px;">≤ −$2,000</span></div>
+      <div class="leg-item"><div class="leg-swatch" style="background:#b87d12"></div><span style="font-size:10.5px;">−$2,000 to +$2,000</span></div>
+      <div class="leg-item"><div class="leg-swatch" style="background:#b83232"></div><span style="font-size:10.5px;">> +$2,000</span></div>
+    </div>`;
+  } else if (m === 'pct_pell') {
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:3px;">
+      <div class="leg-item"><div class="leg-swatch" style="background:#2a7a4b"></div><span style="font-size:10.5px;">≥ 50% (high Pell access)</span></div>
+      <div class="leg-item"><div class="leg-swatch" style="background:#b87d12"></div><span style="font-size:10.5px;">25–50% (moderate)</span></div>
+      <div class="leg-item"><div class="leg-swatch" style="background:#b83232"></div><span style="font-size:10.5px;">< 25% (low Pell access)</span></div>
+    </div>`;
+  }
+}
+
+function renderList(visible) {
+  visible.sort((a,b) => {
+    if (a.c.id === state.selected) return -1;
+    if (b.c.id === state.selected) return 1;
+    return (a.c.gap_pct ?? 999) - (b.c.gap_pct ?? 999);
+  });
+
+  const html = visible.slice(0, 200).map(({ c, col }) => {
+    const lbl = getLabel(c);
+    const sel = c.id === state.selected;
+    return `<div class="c-item${sel?' sel':''}" data-id="${c.id}">
+      <div class="c-dot" style="background:${col}"></div>
+      <div class="c-info">
+        <div class="c-name">${c.name}</div>
+        <div class="c-meta">${c.city}, ${c.state} · ${c.locale_type||'—'}</div>
+      </div>
+      <div class="c-gap" style="color:${col}">${lbl}</div>
+    </div>`;
+  }).join('');
+
+  const overflow = visible.length > 200
+    ? `<div style="padding:8px 14px;font-size:10.5px;color:var(--text-3);font-family:'IBM Plex Mono',monospace;">${visible.length-200} more — refine filters to narrow</div>`
+    : '';
+
+  document.getElementById('college-list').innerHTML = html + overflow;
+  document.querySelectorAll('.c-item').forEach(el => {
+    el.addEventListener('click', () => selectCollege(+el.dataset.id));
+  });
+}
+
+function fmtDollar(v) {
+  if (v == null) return 'n/a';
+  return (v < 0 ? '−' : '+') + '$' + Math.abs(v).toLocaleString();
+}
+
+function selectCollege(id) {
+  state.selected = id;
+  const c = COLLEGES.find(x => x.id === id);
+  if (!c) return;
+  const m = markers[id];
+  if (!m) return;
+
+  map.setView(m.getLatLng(), Math.max(map.getZoom(), 9), { animate: true });
+
+  const col = getColor(c);
+  const beaCol = BEA_COLORS[c.bea_region] || '#a09a92';
+  const beaShort = BEA_SHORT[c.bea_region] || c.bea_region || '—';
+  const gPct = c.gap_pct != null ? (c.gap_pct>0?'+':'')+c.gap_pct+'%' : 'n/a';
+  const gDol = fmtDollar(c.affordability_gap);
+
+  const html = `<div class="p-body">
+    <div class="p-name">${c.name}</div>
+    <div class="p-loc">${c.city}, ${c.state} · ZIP ${c.zip}</div>
+    <div class="p-score">
+      <div class="p-score-num" style="color:${col}">${gPct}</div>
+      <div class="p-score-sub">Affordability<br>Gap %</div>
+    </div>
+    <div class="p-grid">
+      <div>
+        <div class="p-field-label">Dollar Gap</div>
+        <div class="p-field-val">${gDol}</div>
+      </div>
+      <div>
+        <div class="p-field-label">Pell %</div>
+        <div class="p-field-val">${c.pct_pell != null ? c.pct_pell+'%' : 'n/a'}</div>
+      </div>
+      <div>
+        <div class="p-field-label">Pell Quartile</div>
+        <div class="p-field-val">${c.pell_quartile||'n/a'}</div>
+      </div>
+      <div>
+        <div class="p-field-label">Locale</div>
+        <div class="p-field-val">${c.locale_type||'n/a'}</div>
+      </div>
+      <div class="p-wide">
+        <div class="p-field-label">BEA Region</div>
+        <div class="p-bea-tag" style="background:${beaCol}">${beaShort}</div>
+      </div>
+      <div class="p-wide" style="border-top:0;padding-top:0;margin-top:4px;">
+        <div class="p-field-label">Carnegie Classification</div>
+        <div class="p-field-val" style="font-family:'IBM Plex Sans',sans-serif;font-size:10.5px;">${c.carnegie_class||'n/a'}</div>
+      </div>
+    </div>
+  </div>`;
+
+  m.bindPopup(html, { maxWidth: 300 }).openPopup();
+  render();
+}
+
+// ═══════════════════════════════════════════════
+// MAP INIT
+// ═══════════════════════════════════════════════
+function init() {
+  map = L.map('map', {
+    center: [38.5, -96],
+    zoom: 4,
+    minZoom: 3,
+    maxZoom: 14,
+  });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19,
+  }).addTo(map);
+
+  layer = L.layerGroup().addTo(map);
+
+  COLLEGES.forEach(c => {
+    if (!c.lat || !c.lng) return;
+    const col = getColor(c);
+    const m = L.circleMarker([c.lat, c.lng], {
+      radius: 5,
+      fillColor: col,
+      color: col,
+      weight: 0,
+      fillOpacity: 0.78,
+    });
+    m.on('click', () => selectCollege(c.id));
+    markers[c.id] = m;
+    m.addTo(layer);
+  });
+
+  const loading = document.getElementById('loading');
+  loading.style.opacity = '0';
+  setTimeout(() => loading.remove(), 350);
+
+  render();
+}
+
+// ═══════════════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════════════
+
+// Color mode
+document.querySelectorAll('.mode-tab').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.mode-tab').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    state.colorMode = b.dataset.mode;
+    render();
+  });
+});
+
+// BEA chips
+const BEA_CHIP_COLORS = {
+  "Far West (AK, CA, HI, NV, OR, WA)": "#4e6fa8",
+  "Great Lakes (IL, IN, MI, OH, WI)": "#6b9e6b",
+  "Mid East (DE, DC, MD, NJ, NY, PA)": "#a0617a",
+  "New England (CT, ME, MA, NH, RI, VT)": "#4e8fa0",
+  "Other U.S. jurisdictions (AS, FM, GU, MH, MP, PR, PW, VI)": "#9a7a3a",
+  "Plains (IA, KS, MN, MO, NE, ND, SD)": "#7a6ea8",
+  "Rocky Mountains (CO, ID, MT, UT, WY)": "#a07850",
+  "Southeast (AL, AR, FL, GA, KY, LA, MS, NC, SC, TN, VA, WV)": "#c05050",
+  "Southwest (AZ, NM, OK, TX)": "#c07840",
+  "U.S. Service schools": "#5a8a5a",
+};
+
+document.querySelectorAll('#bea-chips .bea-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#bea-chips .bea-chip').forEach(c => {
+      c.classList.remove('active');
+      c.style.background = '';
+      c.style.borderColor = '';
+      c.style.color = '';
+    });
+    chip.classList.add('active');
+    state.bea = chip.dataset.val;
+    if (state.bea !== 'all') {
+      const col = BEA_CHIP_COLORS[state.bea] || '#666';
+      chip.style.background = col;
+      chip.style.borderColor = col;
+      chip.style.color = 'white';
+    }
+    render();
+  });
+});
+
+// Locale chips
+document.querySelectorAll('#locale-chips .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#locale-chips .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    state.locale = chip.dataset.val;
+    render();
+  });
+});
+
+// Pell chips
+document.querySelectorAll('#pell-chips .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#pell-chips .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    state.pell = chip.dataset.val;
+    render();
+  });
+});
+
+// Carnegie
+document.getElementById('carnegie-sel').addEventListener('change', e => {
+  state.carnegie = e.target.value;
+  render();
+});
+
+// Sliders
+const gMinEl = document.getElementById('gap-min');
+const gMaxEl = document.getElementById('gap-max');
+const gMinLbl = document.getElementById('gmin-lbl');
+const gMaxLbl = document.getElementById('gmax-lbl');
+
+function syncSliders() {
+  let mn = +gMinEl.value, mx = +gMaxEl.value;
+  if (mn > mx) { const t=mn; mn=mx; mx=t; }
+  state.gapMin = mn;
+  state.gapMax = mx;
+  gMinLbl.textContent = (mn>=0?'+':'')+mn+'%';
+  gMaxLbl.textContent = (mx>=0?'+':'')+mx+'%';
+  render();
+}
+gMinEl.addEventListener('input', syncSliders);
+gMaxEl.addEventListener('input', syncSliders);
+
+// Search
+let st;
+document.getElementById('search').addEventListener('input', e => {
+  clearTimeout(st);
+  st = setTimeout(() => { state.search = e.target.value.toLowerCase().trim(); render(); }, 200);
+});
+
+// Reset
+document.getElementById('reset-btn').addEventListener('click', () => {
+  state = { ...state, colorMode:'gap_pct', bea:'all', locale:'all', pell:'all', carnegie:'all', gapMin:-70, gapMax:540, search:'', selected:null };
+  document.querySelectorAll('.mode-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.mode-tab[data-mode="gap_pct"]').classList.add('active');
+  document.querySelectorAll('#bea-chips .bea-chip').forEach(c=>{c.classList.remove('active');c.style.background='';c.style.borderColor='';c.style.color='';});
+  document.querySelector('#bea-chips .bea-chip[data-val="all"]').classList.add('active');
+  document.querySelectorAll('#locale-chips .chip').forEach(c=>c.classList.remove('active'));
+  document.querySelector('#locale-chips .chip[data-val="all"]').classList.add('active');
+  document.querySelectorAll('#pell-chips .chip').forEach(c=>c.classList.remove('active'));
+  document.querySelector('#pell-chips .chip[data-val="all"]').classList.add('active');
+  document.getElementById('carnegie-sel').value = 'all';
+  document.getElementById('search').value = '';
+  gMinEl.value = -70; gMaxEl.value = 540;
+  gMinLbl.textContent = '−70%'; gMaxLbl.textContent = '+540%';
+  map.closePopup();
+  render();
+});
+
+fetch('./colleges.json')
+  .then(r => r.json())
+  .then(data => {
+    COLLEGES = data;
+    init();
+  });
+</script>
+</body>
+</html>
