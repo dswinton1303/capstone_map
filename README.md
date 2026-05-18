@@ -3,7 +3,6 @@ Overview
 The visualization explores differences in college affordability across institutions using geographic and institutional data.
 
 Data
-
 Each institution inclues:
 
 Affordability gap (dollar values)
