@@ -2,11 +2,10 @@ Overview
 
 The visualization explores differences in college affordability across institutions using geographic and institutional data.
 
-Data
-Each institution inclues:
+Data, each institution inclues:
 
 Affordability gap (dollar values)
-Pell Grant participation rate
+Pell Grant pct
 Locale type (urban, suburban, town, rural)
 BEA economic region
 Carnegie Classification
