@@ -3,22 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>College Affordability Gap — U.S. Map</title>
+<title>Exploring and Vizualizing the College Affordability Gap</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root {
-    --bg:       #f7f5f0;
+    --bg:       #f6f7f9;
     --surface:  #ffffff;
-    --surface2: #f2f0eb;
-    --border:   #d8d4cb;
-    --border2:  #e8e4dd;
-    --text:     #1a1814;
-    --text-2:   #4a463e;
-    --text-3:   #7a7570;
-    --text-4:   #a09a92;
+    --surface2: #f8f9fb;
+    --border:   #e6e8ec;
+    --border2:  #e8eaf0;
+    --text:     #1b1d21;
+    --text-2:   #51565f;
+    --text-3:   #7f8591;
+    --text-4:   #aab0bb;
 
     /* Affordability colors — muted, academic */
     --green:        #2a7a4b;
@@ -45,11 +45,18 @@
     --topbar-h: 52px;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
   body {
-    font-family: 'IBM Plex Sans', sans-serif;
-    background: var(--bg);
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    background: #f6f7f9;
     color: var(--text);
     height: 100vh;
     overflow: hidden;
@@ -59,9 +66,13 @@
 
   /* ── TOP BAR ── */
   #topbar {
+    position: relative;
     height: var(--topbar-h);
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
+    background: rgba(226, 244, 229, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(154, 189, 163, 0.6);
+    box-shadow: 0 12px 40px rgba(73, 107, 78, 0.07);
     display: flex;
     align-items: center;
     padding: 0 18px;
@@ -71,12 +82,17 @@
   }
 
   #topbar h1 {
-    font-family: 'Source Serif 4', serif;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Inter', sans-serif;
     font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 0;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    line-height: 1.05;
     white-space: nowrap;
     color: var(--text);
+    margin: 0;
   }
 
   #topbar h1 em {
@@ -98,7 +114,7 @@
     gap: 5px;
     font-size: 11.5px;
     color: var(--text-2);
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Inter', sans-serif;
     white-space: nowrap;
   }
 
@@ -123,7 +139,7 @@
     padding: 5px 10px 5px 28px;
     background: var(--surface2);
     color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 12px;
     width: 210px;
     outline: none;
@@ -148,8 +164,11 @@
   /* ── SIDEBAR ── */
   #sidebar {
     width: var(--sidebar-w);
-    background: var(--surface);
-    border-right: 1px solid var(--border);
+    background: rgba(234, 247, 238, 0.94);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-right: 1px solid rgba(154, 189, 163, 0.6);
+    box-shadow: inset 0 0 0 1px rgba(112, 162, 129, 0.08);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -157,47 +176,47 @@
   }
 
   .sb-section {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border2);
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(154, 189, 163, 0.4);
   }
 
   .sb-label {
-    font-size: 9.5px;
+    font-size: 10px;
     font-weight: 600;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text-3);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
 
   /* Color mode */
   .mode-tabs {
     display: flex;
     gap: 2px;
-    background: var(--surface2);
-    border-radius: 4px;
-    padding: 2px;
+    background: rgba(216, 232, 219, 0.85);
+    border-radius: 6px;
+    padding: 4px;
   }
 
   .mode-tab {
     flex: 1;
-    padding: 5px 6px;
-    border-radius: 3px;
+    padding: 6px 8px;
+    border-radius: 6px;
     border: none;
     background: transparent;
     color: var(--text-3);
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.12s;
+    transition: all 0.16s ease;
     text-align: center;
   }
 
   .mode-tab.active {
-    background: var(--surface);
+    background: rgba(255,255,255,0.9);
     color: var(--text);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   }
 
   /* BEA region filter */
@@ -215,7 +234,7 @@
     border-radius: 3px;
     border: 1px solid var(--border2);
     background: transparent;
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 10.5px;
     cursor: pointer;
     transition: all 0.12s;
@@ -241,7 +260,7 @@
     border: 1px solid var(--border);
     background: transparent;
     color: var(--text-2);
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
     cursor: pointer;
     transition: all 0.12s;
@@ -263,7 +282,7 @@
     padding: 6px 24px 6px 8px;
     background: var(--surface2);
     color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
     outline: none;
     appearance: none;
@@ -277,7 +296,7 @@
 
   /* Gap slider */
   .slider-row { display: flex; gap: 6px; align-items: center; }
-  .slider-val { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-3); white-space: nowrap; min-width: 42px; }
+  .slider-val { font-family: 'Inter', sans-serif; font-size: 10px; color: var(--text-3); white-space: nowrap; min-width: 42px; }
   input[type=range] { flex: 1; accent-color: var(--text); cursor: pointer; height: 2px; }
 
   /* Reset */
@@ -288,7 +307,7 @@
     border-radius: 4px;
     background: transparent;
     color: var(--text-3);
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
     cursor: pointer;
     transition: all 0.12s;
@@ -302,27 +321,47 @@
     font-size: 10.5px;
     color: var(--text-3);
     border-bottom: 1px solid var(--border2);
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Inter', sans-serif;
     flex-shrink: 0;
   }
 
   #results-hdr span { color: var(--text); font-weight: 500; }
+
+  .gradient-bar {
+    height: 6px;
+    width: 100%;
+    border-radius: 3px;
+    margin-top: 8px;
+    background: linear-gradient(to right, #2a7a4b, #b87d12, #b83232);
+  }
+
+  #sidebar {
+    animation: sidebarEnter 0.35s ease;
+  }
+
+  @keyframes sidebarEnter {
+    from { opacity: 0; transform: translateX(-16px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
 
   #college-list { overflow-y: auto; flex: 1; }
   #college-list::-webkit-scrollbar { width: 3px; }
   #college-list::-webkit-scrollbar-thumb { background: var(--border); }
 
   .c-item {
-    padding: 8px 14px;
-    border-bottom: 1px solid var(--border2);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
     cursor: pointer;
     display: flex;
     align-items: flex-start;
     gap: 8px;
-    transition: background 0.08s;
+    transition: background 0.18s ease, transform 0.18s ease;
   }
 
-  .c-item:hover { background: var(--surface2); }
+  .c-item:hover {
+    background: #f7f8fa;
+    transform: translateX(1px);
+  }
   .c-item.sel { background: #f0ede6; border-left: 2px solid var(--text); }
 
   .c-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
@@ -330,7 +369,7 @@
   .c-info { flex: 1; min-width: 0; }
 
   .c-name {
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 500;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -339,8 +378,8 @@
   }
 
   .c-meta {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 9.5px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
     color: var(--text-3);
     margin-top: 1px;
     overflow: hidden;
@@ -349,10 +388,18 @@
   }
 
   .c-gap {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
     font-weight: 500;
     flex-shrink: 0;
+  }
+
+  .marker-dot {
+    transition: transform 0.15s ease;
+  }
+
+  .marker-dot:hover {
+    transform: scale(1.4);
   }
 
   /* ── MAP ── */
@@ -376,7 +423,7 @@
   .p-body { padding: 14px 16px; width: 270px; }
 
   .p-name {
-    font-family: 'Source Serif 4', serif;
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
     font-weight: 600;
     line-height: 1.3;
@@ -385,7 +432,7 @@
   }
 
   .p-loc {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Inter', sans-serif;
     font-size: 10px;
     color: var(--text-3);
     margin-bottom: 12px;
@@ -401,7 +448,7 @@
   }
 
   .p-score-num {
-    font-family: 'Source Serif 4', serif;
+    font-family: 'Inter', sans-serif;
     font-size: 28px;
     font-weight: 600;
     line-height: 1;
@@ -431,7 +478,7 @@
   }
 
   .p-field-val {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Inter', sans-serif;
     font-size: 10.5px;
     color: var(--text);
   }
@@ -483,14 +530,14 @@
   }
 
   #loading h2 {
-    font-family: 'Source Serif 4', serif;
+    font-family: 'Inter', sans-serif;
     font-size: 18px;
-    font-weight: 400;
+    font-weight: 600;
     color: var(--text);
   }
 
   #loading p {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
     color: var(--text-3);
   }
@@ -520,26 +567,7 @@
 
 <!-- TOP BAR -->
 <div id="topbar">
-  <h1>College <em>Affordability Gap</em> — United States</h1>
-  <div class="v-rule"></div>
-  <div id="legend-bar">
-    <div class="leg-item">
-      <div class="leg-swatch" style="background:var(--green)"></div>
-      <span>Affordable</span>
-      <span class="leg-count" id="cnt-g">—</span>
-    </div>
-    <div class="leg-item">
-      <div class="leg-swatch" style="background:var(--yellow)"></div>
-      <span>Marginal</span>
-      <span class="leg-count" id="cnt-y">—</span>
-    </div>
-    <div class="leg-item">
-      <div class="leg-swatch" style="background:var(--red)"></div>
-      <span>Unaffordable</span>
-      <span class="leg-count" id="cnt-r">—</span>
-    </div>
-  </div>
-  <div class="v-rule"></div>
+  <h1>Exploring and Vizualizing the College Affordability Gap</h1>
   <div id="search-wrap">
     <svg class="search-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input id="search" type="text" placeholder="Search institution…">
@@ -555,10 +583,9 @@
       <div class="sb-section">
         <div class="sb-label">Color by</div>
         <div class="mode-tabs">
-          <button class="mode-tab active" data-mode="gap_pct">Gap %</button>
-          <button class="mode-tab" data-mode="affordability_gap">Gap $</button>
+          <button class="mode-tab active" data-mode="affordability_gap">Gap $</button>
           <button class="mode-tab" data-mode="pct_pell">Pell %</button>
-          <button class="mode-tab" data-mode="bea">BEA Region</button>
+          <button class="mode-tab" data-mode="bea">Region</button>
         </div>
 
         <div id="legend-detail" style="margin-top:8px;">
@@ -570,9 +597,9 @@
         </div>
       </div>
 
-      <!-- BEA Region Filter -->
+      <!-- Region Filter -->
       <div class="sb-section">
-        <div class="sb-label">BEA Region</div>
+        <div class="sb-label">Region</div>
         <div class="bea-grid" id="bea-chips">
           <button class="bea-chip active" data-val="all" style="grid-column:1/-1">
             <div class="bea-dot" style="background:var(--text-3)"></div>All Regions
@@ -680,17 +707,17 @@
         </select>
       </div>
 
-      <!-- Gap % Range -->
+      <!-- Gap $ Range -->
       <div class="sb-section">
-        <div class="sb-label">Affordability Gap % Range</div>
+        <div class="sb-label">Affordability Gap $ Range</div>
         <div style="display:flex;flex-direction:column;gap:5px;">
           <div class="slider-row">
-            <span class="slider-val" id="gmin-lbl">−70%</span>
-            <input type="range" id="gap-min" min="-70" max="540" value="-70" step="5">
+            <span class="slider-val" id="gmin-lbl">−20,000</span>
+            <input type="range" id="gap-min" min="-20000" max="20000" value="-20000" step="500">
           </div>
           <div class="slider-row">
-            <span class="slider-val" id="gmax-lbl">+540%</span>
-            <input type="range" id="gap-max" min="-70" max="540" value="540" step="5">
+            <span class="slider-val" id="gmax-lbl">+20,000</span>
+            <input type="range" id="gap-max" min="-20000" max="20000" value="20000" step="500">
           </div>
         </div>
       </div>
@@ -748,13 +775,7 @@ const BEA_SHORT = {
 // ═══════════════════════════════════════════════
 const MODES = {
   gap_pct: {
-    color: c => {
-      const v = c.gap_pct;
-      if (v == null) return '#c8c4bc';
-      if (v <= -10) return '#2a7a4b';
-      if (v <= 10)  return '#b87d12';
-      return '#b83232';
-    },
+    color: c => gapColor(c.gap_pct),
     label: c => {
       const v = c.gap_pct;
       if (v == null) return 'n/a';
@@ -792,13 +813,44 @@ const MODES = {
   },
 };
 
+function gapColor(v) {
+  if (v == null) return '#c8c4bc';
+
+  const min = -70;
+  const max = 70;
+  const t = Math.max(0, Math.min(1, (v - min) / (max - min)));
+  const r = Math.round(42 + t * 150);
+  const g = Math.round(122 - t * 90);
+  const b = Math.round(75 - t * 25);
+  return `rgb(${r},${g},${b})`;
+}
+
 function getColor(c) { return MODES[state.colorMode].color(c); }
 function getLabel(c) { return MODES[state.colorMode].label(c); }
 
-function colorClass(color) {
-  if (color === '#2a7a4b') return 'g';
-  if (color === '#b87d12') return 'y';
-  if (color === '#b83232') return 'r';
+function colorClass(c) {
+  const mode = state.colorMode;
+  if (mode === 'gap_pct') {
+    if (c.gap_pct == null) return 'x';
+    if (c.gap_pct <= -10) return 'g';
+    if (c.gap_pct <= 10) return 'y';
+    return 'r';
+  }
+  if (mode === 'affordability_gap') {
+    if (c.affordability_gap == null) return 'x';
+    if (c.affordability_gap <= -2000) return 'g';
+    if (c.affordability_gap <= 2000) return 'y';
+    return 'r';
+  }
+  if (mode === 'pct_pell') {
+    if (c.pct_pell == null) return 'x';
+    if (c.pct_pell >= 50) return 'g';
+    if (c.pct_pell >= 25) return 'y';
+    return 'r';
+  }
+  if (mode === 'bea') {
+    return 'x';
+  }
   return 'x';
 }
 
@@ -806,14 +858,13 @@ function colorClass(color) {
 // STATE
 // ═══════════════════════════════════════════════
 let state = {
-  colorMode: 'gap_pct',
-  bea: 'all',
-  locale: 'all',
-  pell: 'all',
-  carnegie: 'all',
-  gapMin: -70,
-  gapMax: 540,
-  search: '',
+    colorMode: 'affordability_gap',
+    bea: 'all',
+    locale: 'all',
+    pell: 'all',
+    carnegie: 'all',
+    gapMin: -20000,
+    gapMax: 20000,
   selected: null,
 };
 
@@ -829,7 +880,7 @@ function passes(c) {
   if (state.locale !== 'all' && c.locale_type !== state.locale) return false;
   if (state.pell !== 'all' && c.pell_quartile !== state.pell) return false;
   if (state.carnegie !== 'all' && c.carnegie_class !== state.carnegie) return false;
-  if (c.gap_pct != null && (c.gap_pct < state.gapMin || c.gap_pct > state.gapMax)) return false;
+  if (c.affordability_gap != null && (c.affordability_gap < state.gapMin || c.affordability_gap > state.gapMax)) return false;
   return true;
 }
 
@@ -845,7 +896,7 @@ function render() {
     if (!m) return;
     const show = passes(c);
     const col = getColor(c);
-    const cl = colorClass(col);
+    const cl = colorClass(c);
 
     m.setStyle({ fillColor: col, color: col });
 
@@ -860,9 +911,12 @@ function render() {
     }
   });
 
-  document.getElementById('cnt-g').textContent = g;
-  document.getElementById('cnt-y').textContent = y;
-  document.getElementById('cnt-r').textContent = r;
+  const cntG = document.getElementById('cnt-g');
+  const cntY = document.getElementById('cnt-y');
+  const cntR = document.getElementById('cnt-r');
+  if (cntG) cntG.textContent = g;
+  if (cntY) cntY.textContent = y;
+  if (cntR) cntR.textContent = r;
   document.getElementById('vis-cnt').textContent = visible.length;
 
   updateLegendDetail();
@@ -877,22 +931,31 @@ function updateLegendDetail() {
       `<div class="leg-item"><div class="leg-swatch" style="background:${c}"></div><span style="font-size:10.5px;">${BEA_SHORT[k]}</span></div>`
     ).join('');
   } else if (m === 'gap_pct') {
-    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:3px;">
-      <div class="leg-item"><div class="leg-swatch" style="background:#2a7a4b"></div><span style="font-size:10.5px;">≤ −10% — more affordable</span></div>
-      <div class="leg-item"><div class="leg-swatch" style="background:#b87d12"></div><span style="font-size:10.5px;">−10% to +10% — marginal</span></div>
-      <div class="leg-item"><div class="leg-swatch" style="background:#b83232"></div><span style="font-size:10.5px;">> +10% — less affordable</span></div>
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="gradient-bar"></div>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <div class="leg-item"><div class="leg-swatch" style="background:#2a7a4b"></div><span style="font-size:10.5px;">≤ −10% — more affordable</span></div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#b87d12"></div><span style="font-size:10.5px;">−10% to +10% — marginal</span></div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#b83232"></div><span style="font-size:10.5px;">> +10% — less affordable</span></div>
+      </div>
     </div>`;
   } else if (m === 'affordability_gap') {
-    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:3px;">
-      <div class="leg-item"><div class="leg-swatch" style="background:#2a7a4b"></div><span style="font-size:10.5px;">≤ −$2,000</span></div>
-      <div class="leg-item"><div class="leg-swatch" style="background:#b87d12"></div><span style="font-size:10.5px;">−$2,000 to +$2,000</span></div>
-      <div class="leg-item"><div class="leg-swatch" style="background:#b83232"></div><span style="font-size:10.5px;">> +$2,000</span></div>
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="gradient-bar"></div>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <div class="leg-item"><div class="leg-swatch" style="background:#2a7a4b"></div><span style="font-size:10.5px;">≤ −$2,000</span></div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#b87d12"></div><span style="font-size:10.5px;">−$2,000 to +$2,000</span></div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#b83232"></div><span style="font-size:10.5px;">> +$2,000</span></div>
+      </div>
     </div>`;
   } else if (m === 'pct_pell') {
-    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:3px;">
-      <div class="leg-item"><div class="leg-swatch" style="background:#2a7a4b"></div><span style="font-size:10.5px;">≥ 50% (high Pell access)</span></div>
-      <div class="leg-item"><div class="leg-swatch" style="background:#b87d12"></div><span style="font-size:10.5px;">25–50% (moderate)</span></div>
-      <div class="leg-item"><div class="leg-swatch" style="background:#b83232"></div><span style="font-size:10.5px;">< 25% (low Pell access)</span></div>
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="gradient-bar"></div>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <div class="leg-item"><div class="leg-swatch" style="background:#2a7a4b"></div><span style="font-size:10.5px;">≥ 50% (high Pell access)</span></div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#b87d12"></div><span style="font-size:10.5px;">25–50% (moderate)</span></div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#b83232"></div><span style="font-size:10.5px;">< 25% (low Pell access)</span></div>
+      </div>
     </div>`;
   }
 }
@@ -901,7 +964,9 @@ function renderList(visible) {
   visible.sort((a,b) => {
     if (a.c.id === state.selected) return -1;
     if (b.c.id === state.selected) return 1;
-    return (a.c.gap_pct ?? 999) - (b.c.gap_pct ?? 999);
+    const aVal = a.c.affordability_gap ?? 999999;
+    const bVal = b.c.affordability_gap ?? 999999;
+    return aVal - bVal;
   });
 
   const html = visible.slice(0, 200).map(({ c, col }) => {
@@ -918,7 +983,7 @@ function renderList(visible) {
   }).join('');
 
   const overflow = visible.length > 200
-    ? `<div style="padding:8px 14px;font-size:10.5px;color:var(--text-3);font-family:'IBM Plex Mono',monospace;">${visible.length-200} more — refine filters to narrow</div>`
+    ? `<div style="padding:8px 14px;font-size:10.5px;color:var(--text-3);font-family:'Inter',sans-serif;">${visible.length-200} more — refine filters to narrow</div>`
     : '';
 
   document.getElementById('college-list').innerHTML = html + overflow;
@@ -944,15 +1009,14 @@ function selectCollege(id) {
   const col = getColor(c);
   const beaCol = BEA_COLORS[c.bea_region] || '#a09a92';
   const beaShort = BEA_SHORT[c.bea_region] || c.bea_region || '—';
-  const gPct = c.gap_pct != null ? (c.gap_pct>0?'+':'')+c.gap_pct+'%' : 'n/a';
   const gDol = fmtDollar(c.affordability_gap);
 
   const html = `<div class="p-body">
     <div class="p-name">${c.name}</div>
     <div class="p-loc">${c.city}, ${c.state} · ZIP ${c.zip}</div>
     <div class="p-score">
-      <div class="p-score-num" style="color:${col}">${gPct}</div>
-      <div class="p-score-sub">Affordability<br>Gap %</div>
+      <div class="p-score-num" style="color:${col}">${gDol}</div>
+      <div class="p-score-sub">Affordability<br>Gap $</div>
     </div>
     <div class="p-grid">
       <div>
@@ -972,12 +1036,12 @@ function selectCollege(id) {
         <div class="p-field-val">${c.locale_type||'n/a'}</div>
       </div>
       <div class="p-wide">
-        <div class="p-field-label">BEA Region</div>
+        <div class="p-field-label">Region</div>
         <div class="p-bea-tag" style="background:${beaCol}">${beaShort}</div>
       </div>
       <div class="p-wide" style="border-top:0;padding-top:0;margin-top:4px;">
         <div class="p-field-label">Carnegie Classification</div>
-        <div class="p-field-val" style="font-family:'IBM Plex Sans',sans-serif;font-size:10.5px;">${c.carnegie_class||'n/a'}</div>
+        <div class="p-field-val" style="font-family:'Inter',sans-serif;font-size:10.5px;">${c.carnegie_class||'n/a'}</div>
       </div>
     </div>
   </div>`;
@@ -997,10 +1061,13 @@ function init() {
     maxZoom: 14,
   });
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 19,
-  }).addTo(map);
+  L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    {
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      maxZoom: 19,
+    }
+  ).addTo(map);
 
   layer = L.layerGroup().addTo(map);
 
@@ -1008,11 +1075,12 @@ function init() {
     if (!c.lat || !c.lng) return;
     const col = getColor(c);
     const m = L.circleMarker([c.lat, c.lng], {
-      radius: 5,
+      radius: 4,
       fillColor: col,
       color: col,
       weight: 0,
-      fillOpacity: 0.78,
+      fillOpacity: 0.7,
+      className: 'marker-dot',
     });
     m.on('click', () => selectCollege(c.id));
     markers[c.id] = m;
@@ -1127,9 +1195,9 @@ document.getElementById('search').addEventListener('input', e => {
 
 // Reset
 document.getElementById('reset-btn').addEventListener('click', () => {
-  state = { ...state, colorMode:'gap_pct', bea:'all', locale:'all', pell:'all', carnegie:'all', gapMin:-70, gapMax:540, search:'', selected:null };
+  state = { ...state, colorMode:'affordability_gap', bea:'all', locale:'all', pell:'all', carnegie:'all', gapMin:-20000, gapMax:20000, search:'', selected:null };
   document.querySelectorAll('.mode-tab').forEach(b=>b.classList.remove('active'));
-  document.querySelector('.mode-tab[data-mode="gap_pct"]').classList.add('active');
+  document.querySelector('.mode-tab[data-mode="affordability_gap"]').classList.add('active');
   document.querySelectorAll('#bea-chips .bea-chip').forEach(c=>{c.classList.remove('active');c.style.background='';c.style.borderColor='';c.style.color='';});
   document.querySelector('#bea-chips .bea-chip[data-val="all"]').classList.add('active');
   document.querySelectorAll('#locale-chips .chip').forEach(c=>c.classList.remove('active'));
@@ -1138,8 +1206,8 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   document.querySelector('#pell-chips .chip[data-val="all"]').classList.add('active');
   document.getElementById('carnegie-sel').value = 'all';
   document.getElementById('search').value = '';
-  gMinEl.value = -70; gMaxEl.value = 540;
-  gMinLbl.textContent = '−70%'; gMaxLbl.textContent = '+540%';
+  gMinEl.value = -20000; gMaxEl.value = 20000;
+  gMinLbl.textContent = '−20,000'; gMaxLbl.textContent = '+20,000';
   map.closePopup();
   render();
 });
