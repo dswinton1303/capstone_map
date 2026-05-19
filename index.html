@@ -133,6 +133,21 @@
     position: relative;
   }
 
+  .topbar-link {
+    font-family: 'Inter', sans-serif;
+    font-size: 11.5px;
+    color: var(--text-2);
+    text-decoration: none;
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface2);
+    transition: border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+
+  .topbar-link:hover { border-color: var(--text-3); color: var(--text); }
+
   #search {
     border: 1px solid var(--border);
     border-radius: 4px;
@@ -568,6 +583,7 @@
 <!-- TOP BAR -->
 <div id="topbar">
   <h1>Exploring and Vizualizing the College Affordability Gap</h1>
+  <a class="topbar-link" href="PROJECT_OVERVIEW.md" target="_blank" rel="noopener">About &amp; Methodology</a>
   <div id="search-wrap">
     <svg class="search-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input id="search" type="text" placeholder="Search institution…">
